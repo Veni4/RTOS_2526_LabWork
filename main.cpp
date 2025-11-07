@@ -18,8 +18,18 @@
 #define DISPLAY_RES 9
 #define DISPLAY_DC 10
 #define DISPLAY_BUSY 19
+
+//Global variables, can be accessed by all tasks
+//Could be optimized by passing these as parameters to tasks instead
 QueueHandle_t PrinterQueue;
 GxEPD2_BW<WatchyDisplay, WatchyDisplay::HEIGHT> display(WatchyDisplay{});
+char* log_buffer[256] = {0};
+int log_index = 0;
+TaskHandle_t sender1 = NULL;
+TaskHandle_t sender2 = NULL;
+TaskHandle_t sender3 = NULL;
+TaskHandle_t reciever = NULL;
+
 
 void initDisplay(void* pvParameters) {
     ESP_LOGI("initDisplay", "initializing display");
@@ -127,6 +137,7 @@ void vPrint1(void* pvParameters){
     for (;;) {
         sprintf(str, "Message: 1");
         xQueueSend(PrinterQueue, &str, 0);
+        log_buffer[log_index++] = traceQUEUE_SEND();
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.1);
     }
 }
@@ -141,13 +152,14 @@ void vPrint2(void* pvParameters){
     for (;;) {
         sprintf(str, "Message: 2");
         xQueueSend(PrinterQueue, &str, 0);
+        log_buffer[log_index++] = traceQUEUE_SEND();
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.2);
     }
 }
 void vPrint3(void* pvParameters){
     TickType_t xLastWakeTime;
     char* str;
-    //char counter = 0;
+    //char counter = 0; 
     str = (char*) pvPortMalloc(25*sizeof(char));
 
     xLastWakeTime = xTaskGetTickCount();
@@ -155,6 +167,7 @@ void vPrint3(void* pvParameters){
     for (;;) {
         sprintf(str, "Message: 3");
         xQueueSend(PrinterQueue, &str, 0);
+        log_buffer[log_index++] = traceQUEUE_SEND();
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.3);
     }
 }
@@ -168,7 +181,8 @@ void vPrinter(void* pvParameters){
     ESP_LOGI("vPrinter", "Reciever initialized");
     for (;;) {
         xQueueReceive( PrinterQueue, &xMessage, portMAX_DELAY);
-        ESP_LOGI("vPrinter", "%s", xMessage);
+        log_buffer[log_index++] = traceQUEUE_RECIEVE();
+        //ESP_LOGI("vPrinter", "%s", xMessage);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.1);
     } 
 }
@@ -181,6 +195,29 @@ void vPrinter(void* pvParameters){
 
 #define INCLUDE_vTaskDelete 1
 
+void vLogger (void* pvParameters){
+
+    //deletes all previous tasks
+    if (sender1 != NULL){
+        vTaskDelete(sender1);
+    }
+    if (sender2 != NULL){
+        vTaskDelete(sender2);
+    }
+    if (sender3 != NULL){
+        vTaskDelete(sender3);
+    }
+    if (reciever != NULL){
+        vTaskDelete(reciever);
+    }
+
+    //prints all previous logs
+    ESP_LOGI("vLogger", "Logging events:");
+    for (int i = 0; i < log_index; i++){
+        ESP_LOGI("vLogger", "%s", log_buffer[i]);
+    }
+}
+
 extern "C" void app_main() {
     /* Only priorities from 1-25 (configMAX_PRIORITIES) possible. */
     /* Initialize the display first. */
@@ -188,10 +225,10 @@ extern "C" void app_main() {
     //xTaskCreate(initDisplay, "initDisplay", 4096, NULL, configMAX_PRIORITIES-1, NULL);
     //xTaskCreate(buttonWatch, "watch", 8192, NULL, 1, NULL);
     //xTaskCreate(vPeriodicCounter, "counter", 8192, NULL, configMAX_PRIORITIES-2, NULL);
-    xTaskCreate(vPrinter, "reciever", 4096, NULL, 4, NULL);
-    xTaskCreate(vPrint1, "sender 1", 4096, NULL, 3, NULL);
-    xTaskCreate(vPrint2, "sender 2", 4096, NULL, 3, NULL);
-    xTaskCreate(vPrint3, "sender 3", 4096, NULL, 3, NULL);
+    xTaskCreate(vPrinter, "reciever", 4096, NULL, 4, &reciever);
+    xTaskCreate(vPrint1, "sender 1", 4096, NULL, 3, &sender1);
+    xTaskCreate(vPrint2, "sender 2", 4096, NULL, 3, &sender2);
+    xTaskCreate(vPrint3, "sender 3", 4096, NULL, 3, &sender3);
 
     ESP_LOGI("app_main", "Starting scheduler from app_main()");
     vTaskStartScheduler();
