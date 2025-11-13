@@ -25,10 +25,20 @@ QueueHandle_t PrinterQueue;
 GxEPD2_BW<WatchyDisplay, WatchyDisplay::HEIGHT> display(WatchyDisplay{});
 char* log_buffer[256] = {0};
 int log_index = 0;
+char str_buffer[64] = {0};  // Changed to array instead of pointer
 TaskHandle_t sender1 = NULL;
 TaskHandle_t sender2 = NULL;
 TaskHandle_t sender3 = NULL;
 TaskHandle_t reciever = NULL;
+
+// Function to create log entries
+char* log_event(TickType_t timestamp, const char* message) {
+    char* log_entry = (char*)pvPortMalloc(64 * sizeof(char));
+    if (log_entry != NULL) {
+        snprintf(log_entry, 64, "Time: %u, Msg: %s", (unsigned int)timestamp, message);
+    }
+    return log_entry;
+}
 
 
 void initDisplay(void* pvParameters) {
@@ -124,6 +134,35 @@ void vPeriodicCounter(void* pvParameters) {
     }
 }
 
+// Define custom trace macros that work with your logging system
+#define traceQUEUE_SEND(pxQueue) \
+    do { \
+        TickType_t xLastWakeTime = xTaskGetTickCount(); \
+        if (log_index < 255) { \
+            char* log_entry = log_event(xLastWakeTime, str_buffer); \
+            if (log_entry != NULL) { \
+                log_buffer[log_index] = log_entry; \
+                ESP_LOGI("traceQUEUE_SEND", "Entry %d: %s", log_index, log_buffer[log_index]); \
+                log_index++; \
+            } \
+        } \
+    } while(0)
+
+#define traceQUEUE_RECIEVE(pxQueue) \
+    do { \
+        TickType_t xLastWakeTime = xTaskGetTickCount(); \
+        if (log_index < 255) { \
+            char* log_entry = log_event(xLastWakeTime, str_buffer); \
+            if (log_entry != NULL) { \
+                log_buffer[log_index] = log_entry; \
+                ESP_LOGI("traceQUEUE_RECIEVE", "Entry %d: %s", log_index, log_buffer[log_index]); \
+                log_index++; \
+            } \
+        } \
+    } while(0)
+
+#define INCLUDE_vTaskDelete 1
+
 void vPrint1(void* pvParameters){
     ESP_LOGI("vPrint1", "Initializing printer1");
     TickType_t xLastWakeTime;
@@ -136,8 +175,9 @@ void vPrint1(void* pvParameters){
 
     for (;;) {
         sprintf(str, "Message: 1");
+        sprintf(str_buffer, "Message: 1");
         xQueueSend(PrinterQueue, &str, 0);
-        log_buffer[log_index++] = traceQUEUE_SEND();
+        traceQUEUE_SEND(PrinterQueue);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.1);
     }
 }
@@ -151,8 +191,9 @@ void vPrint2(void* pvParameters){
 
     for (;;) {
         sprintf(str, "Message: 2");
+        sprintf(str_buffer, "Message: 2");
         xQueueSend(PrinterQueue, &str, 0);
-        log_buffer[log_index++] = traceQUEUE_SEND();
+        traceQUEUE_SEND(PrinterQueue);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.2);
     }
 }
@@ -166,8 +207,10 @@ void vPrint3(void* pvParameters){
 
     for (;;) {
         sprintf(str, "Message: 3");
+        sprintf(str_buffer, "Message: 3");
         xQueueSend(PrinterQueue, &str, 0);
-        log_buffer[log_index++] = traceQUEUE_SEND();
+        //ESP_LOGI("vPrinter", "%s", str);
+        traceQUEUE_SEND(PrinterQueue);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.3);
     }
 }
@@ -181,19 +224,12 @@ void vPrinter(void* pvParameters){
     ESP_LOGI("vPrinter", "Reciever initialized");
     for (;;) {
         xQueueReceive( PrinterQueue, &xMessage, portMAX_DELAY);
-        log_buffer[log_index++] = traceQUEUE_RECIEVE();
-        //ESP_LOGI("vPrinter", "%s", xMessage);
+        traceQUEUE_RECIEVE(PrinterQueue);
+        //log_buffer[log_index++] = traceQUEUE_RECIEVE();
+        //  ESP_LOGI("vPrinter", "%s", xMessage);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.1);
     } 
 }
-
-#define traceQUEUE_SEND()
- log_event(xLastWakeTime, str);
-
-#define traceQUEUE_RECIEVE()
- log_event(xLastWakeTime, xMessage);
-
-#define INCLUDE_vTaskDelete 1
 
 void vLogger (void* pvParameters){
 
@@ -213,9 +249,17 @@ void vLogger (void* pvParameters){
 
     //prints all previous logs
     ESP_LOGI("vLogger", "Logging events:");
-    for (int i = 0; i < log_index; i++){
-        ESP_LOGI("vLogger", "%s", log_buffer[i]);
+    ESP_LOGI("vLogger", "Number of logs: %d", log_index);
+    for (int i = 0; i < log_index - 1; i++){
+        if (log_buffer[i] != NULL) {
+            ESP_LOGI("vLogger", "%s", log_buffer[i]);
+        } else {
+            ESP_LOGI("vLogger", "Entry %d: NULL", i);
+        }
     }
+    
+    // Delete this task when done
+    vTaskDelete(NULL);
 }
 
 extern "C" void app_main() {
@@ -229,6 +273,7 @@ extern "C" void app_main() {
     xTaskCreate(vPrint1, "sender 1", 4096, NULL, 3, &sender1);
     xTaskCreate(vPrint2, "sender 2", 4096, NULL, 3, &sender2);
     xTaskCreate(vPrint3, "sender 3", 4096, NULL, 3, &sender3);
+    xTaskCreate(vLogger, "logger", 8192, NULL, 2, NULL);
 
     ESP_LOGI("app_main", "Starting scheduler from app_main()");
     vTaskStartScheduler();
