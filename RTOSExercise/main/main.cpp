@@ -31,6 +31,81 @@ TaskHandle_t sender2 = NULL;
 TaskHandle_t sender3 = NULL;
 TaskHandle_t reciever = NULL;
 
+#define traceQUEUE_SEND(pxQueue) \
+    do { \
+        TickType_t xLastWakeTime = xTaskGetTickCount(); \
+        uint32_t uxLastWakeTimeSecs = xLastWakeTime / TICKS_PER_MS; \
+        if (log_index < 255) { \
+            char* log_entry = new_log_event(xLastWakeTime, uxLastWakeTimeSecs, pxQueue, 0, xTaskGetCurrentTaskHandle()); \
+            if (log_entry != NULL) { \
+                log_buffer[log_index] = log_entry; \
+                ESP_LOGI("traceQUEUE_SEND", "Entry %d: %s", log_index, log_buffer[log_index]); \
+                log_index++; \
+            } \
+        } \
+    } while(0)
+
+#define traceQUEUE_RECIEVE(pxQueue) \
+    do { \
+        TickType_t xLastWakeTime = xTaskGetTickCount(); \
+        uint32_t uxLastWakeTimeSecs = xLastWakeTime / TICKS_PER_MS; \
+        if (log_index < 255) { \
+            char* log_entry = new_log_event(xLastWakeTime, uxLastWakeTimeSecs, pxQueue, 0, xTaskGetCurrentTaskHandle()); \
+            if (log_entry != NULL) { \
+                log_buffer[log_index] = log_entry; \
+                ESP_LOGI("traceQUEUE_RECIEVE", "Entry %d: %s", log_index, log_buffer[log_index]); \
+                log_index++; \
+            } \
+        } \
+    } while(0)
+
+char* new_log_event(TickType_t tick_count, uint32_t time_seconds, QueueHandle_t queue, TickType_t wait_tick_time, TaskHandle_t task_handle){
+    char* log_entry = (char*)pvPortMalloc(128 * sizeof(char));
+    if (log_entry != NULL) {
+        const char* task_name = pcTaskGetName(task_handle);
+        // Calculate milliseconds for more precision
+        uint32_t time_ms = tick_count * portTICK_PERIOD_MS;
+        uint32_t seconds = time_ms / 1000;
+        uint32_t milliseconds = time_ms % 1000;
+        
+        snprintf(log_entry, 128, "Time: %lu ticks, %lu.%03lus, Task: %s, Queue: %p, WaitTime: %u", 
+                 tick_count, seconds, milliseconds, task_name, queue, (unsigned int)wait_tick_time);
+    }
+    return log_entry;
+}
+
+// Define custom trace macros that work with your logging system
+/* #define traceQUEUE_SEND(pxQueue) \
+    do { \
+        TickType_t xLastWakeTime = xTaskGetTickCount(); \
+        if (log_index < 255) { \
+            char* log_entry = log_event(xLastWakeTime, str_buffer); \
+            if (log_entry != NULL) { \
+                log_buffer[log_index] = log_entry; \
+                ESP_LOGI("traceQUEUE_SEND", "Entry %d: %s", log_index, log_buffer[log_index]); \
+                log_index++; \
+            } \
+        } \
+    } while(0) */
+
+/*
+#define traceQUEUE_RECIEVE(pxQueue) \ 
+    do { \
+        TickType_t xLastWakeTime = xTaskGetTickCount(); \
+        if (log_index < 255) { \
+            char* log_entry = log_event(xLastWakeTime, str_buffer); \
+            if (log_entry != NULL) { \
+                log_buffer[log_index] = log_entry; \
+                ESP_LOGI("traceQUEUE_RECIEVE", "Entry %d: %s", log_index, log_buffer[log_index]); \
+                log_index++; \
+            } \
+        } \
+    } while(0)
+*/
+
+#define INCLUDE_vTaskDelete 1
+
+
 // Function to create log entries
 char* log_event(TickType_t timestamp, const char* message) {
     char* log_entry = (char*)pvPortMalloc(64 * sizeof(char));
@@ -134,34 +209,6 @@ void vPeriodicCounter(void* pvParameters) {
     }
 }
 
-// Define custom trace macros that work with your logging system
-#define traceQUEUE_SEND(pxQueue) \
-    do { \
-        TickType_t xLastWakeTime = xTaskGetTickCount(); \
-        if (log_index < 255) { \
-            char* log_entry = log_event(xLastWakeTime, str_buffer); \
-            if (log_entry != NULL) { \
-                log_buffer[log_index] = log_entry; \
-                ESP_LOGI("traceQUEUE_SEND", "Entry %d: %s", log_index, log_buffer[log_index]); \
-                log_index++; \
-            } \
-        } \
-    } while(0)
-
-#define traceQUEUE_RECIEVE(pxQueue) \ 
-    do { \
-        TickType_t xLastWakeTime = xTaskGetTickCount(); \
-        if (log_index < 255) { \
-            char* log_entry = log_event(xLastWakeTime, str_buffer); \
-            if (log_entry != NULL) { \
-                log_buffer[log_index] = log_entry; \
-                ESP_LOGI("traceQUEUE_RECIEVE", "Entry %d: %s", log_index, log_buffer[log_index]); \
-                log_index++; \
-            } \
-        } \
-    } while(0)
-
-#define INCLUDE_vTaskDelete 1
 
 void vPrint1(void* pvParameters){
     ESP_LOGI("vPrint1", "Initializing printer1");
