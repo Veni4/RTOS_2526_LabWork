@@ -11,7 +11,7 @@
 #define TICKS_PER_MS 1000
 
 #define BOTTOM_LEFT 26
-#define TOP_LEFT 25
+#define TOP_LEFT 25 
 #define BOTTOM_RIGHT 4
 #define TOP_RIGHT 35
 #define DISPLAY_CS 5
@@ -148,7 +148,7 @@ void vPeriodicCounter(void* pvParameters) {
         } \
     } while(0)
 
-#define traceQUEUE_RECIEVE(pxQueue) \
+#define traceQUEUE_RECIEVE(pxQueue) \ 
     do { \
         TickType_t xLastWakeTime = xTaskGetTickCount(); \
         if (log_index < 255) { \
