@@ -10,7 +10,6 @@
 
 /* This file gets pulled into assembly sources. Therefore, some includes need to
  * be wrapped in #ifndef __ASSEMBLER__ */
-
 #ifndef __ASSEMBLER__
     /* For configASSERT() */
     #include <assert.h>
@@ -262,6 +261,15 @@
             #define traceQUEUE_SEMAPHORE_RECEIVE( pxQueue )
         #endif
     #endif /* CONFIG_FREERTOS_SMP */
+
+    /*minimal trace macro
+    * It creates a global variable 
+    * It increments the variable each time queue send is called
+    * then g_queue_send_count is printed in main.cpp
+    */
+    extern volatile uint32_t g_queue_send_count;
+    #undef traceQUEUE_SEND
+    #define traceQUEUE_SEND( pxQueue )    ( g_queue_send_count++ )
 #endif /* def __ASSEMBLER__ */
 
 #if CONFIG_FREERTOS_USE_APPLICATION_TASK_TAG

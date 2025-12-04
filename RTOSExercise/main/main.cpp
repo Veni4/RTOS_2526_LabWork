@@ -22,6 +22,13 @@
 //Global variables, can be accessed by all tasks
 //Could be optimized by passing these as parameters to tasks instead
 QueueHandle_t PrinterQueue;
+
+/* Global counter used by FreeRTOS trace macro traceQUEUE_SEND().
+ *
+ * Defined with C linkage so that the C FreeRTOS kernel code can
+ * reference it (the declaration is in FreeRTOSConfig.h).
+ */
+extern "C" volatile uint32_t g_queue_send_count = 0;
 GxEPD2_BW<WatchyDisplay, WatchyDisplay::HEIGHT> display(WatchyDisplay{});
 char* log_buffer[256] = {0};
 int log_index = 0;
@@ -30,7 +37,7 @@ TaskHandle_t sender1 = NULL;
 TaskHandle_t sender2 = NULL;
 TaskHandle_t sender3 = NULL;
 TaskHandle_t reciever = NULL;
-
+/*
 #define traceQUEUE_SEND(pxQueue) \
     do { \
         TickType_t xLastWakeTime = xTaskGetTickCount(); \
@@ -73,7 +80,7 @@ char* new_log_event(TickType_t tick_count, uint32_t time_seconds, QueueHandle_t 
     }
     return log_entry;
 }
-
+*/
 // Define custom trace macros that work with your logging system
 /* #define traceQUEUE_SEND(pxQueue) \
     do { \
@@ -105,7 +112,7 @@ char* new_log_event(TickType_t tick_count, uint32_t time_seconds, QueueHandle_t 
 
 #define INCLUDE_vTaskDelete 1
 
-
+/*
 // Function to create log entries
 char* log_event(TickType_t timestamp, const char* message) {
     char* log_entry = (char*)pvPortMalloc(64 * sizeof(char));
@@ -114,100 +121,7 @@ char* log_event(TickType_t timestamp, const char* message) {
     }
     return log_entry;
 }
-
-
-void initDisplay(void* pvParameters) {
-    ESP_LOGI("initDisplay", "initializing display");
-
-    /* Setting gpio pin types, always necessary at the start. */
-    pinMode(DISPLAY_CS, OUTPUT);
-    pinMode(DISPLAY_RES, OUTPUT);
-    pinMode(DISPLAY_DC, OUTPUT);
-    pinMode(DISPLAY_BUSY, OUTPUT);
-    pinMode(BOTTOM_LEFT, INPUT);
-    pinMode(BOTTOM_RIGHT, INPUT);
-    pinMode(TOP_LEFT, INPUT);
-    pinMode(TOP_RIGHT, INPUT);
-
-    /* Init the display. */
-    display.epd2.initWatchy();
-    display.setFullWindow();
-    display.fillScreen(GxEPD_WHITE);
-    display.setTextColor(GxEPD_BLACK);
-    display.setFont(&FreeMonoBold24pt7b);
-    display.setCursor(0, 90);
-    display.print("Ilmari\nMiguel\nasdf\n");
-    display.display(false);
-
-    /* Delete the display initialization task. */
-    ESP_LOGI("initDisplay", "finished display initialization");
-    vTaskDelete(NULL);
-}
-
-void buttonWatch(void* pvParameters) {
-    unsigned int refresh = 0;
-
-    for (;;) {
-        if (digitalRead(BOTTOM_LEFT) == HIGH) {
-            ESP_LOGI("buttonWatch", "Bottom Left pressed!");
-            display.fillRoundRect(0, 150, 50, 50, 20, GxEPD_BLACK);
-            display.display(true);
-            vTaskDelay(500);
-            display.fillRoundRect(0, 150, 50, 50, 20, GxEPD_WHITE);
-            display.display(true);
-            refresh++;
-        } else if (digitalRead(BOTTOM_RIGHT) == HIGH) {
-            ESP_LOGI("buttonWatch", "Bottom Right pressed!");
-            display.fillRoundRect(150, 150, 50, 50, 20, GxEPD_BLACK);
-            display.display(true);
-            vTaskDelay(500);
-            display.fillRoundRect(150, 150, 50, 50, 20, GxEPD_WHITE);
-            display.display(true);
-            refresh++;
-        } else if (digitalRead(TOP_LEFT) == HIGH) {
-            ESP_LOGI("buttonWatch", "Top Left pressed!");
-            display.fillRoundRect(0, 0, 50, 50, 20, GxEPD_BLACK);
-            display.display(true);
-            vTaskDelay(500);
-            display.fillRoundRect(0, 0, 50, 50, 20, GxEPD_WHITE);
-            display.display(true);
-            refresh++;
-        } else if (digitalRead(TOP_RIGHT) == HIGH) {
-            ESP_LOGI("buttonWatch", "Top Right pressed!");
-            display.fillRoundRect(150, 0, 50, 50, 20, GxEPD_BLACK);
-            display.display(true);
-            vTaskDelay(500);
-            display.fillRoundRect(150, 0, 50, 50, 20, GxEPD_WHITE);
-            display.display(true);
-            refresh++;
-        } else if (refresh >= 10) {
-            ESP_LOGI("buttonWatch", "Performing full refresh of display");
-            display.display(false);
-            refresh = 0;
-        }
-    }
-}
-
-void vPeriodicCounter(void* pvParameters) {
-    TickType_t xLastWakeTime;
-    xLastWakeTime = xTaskGetTickCount();
-    unsigned int count = 0;
-    display.fillScreen(GxEPD_WHITE);
-    display.display(false);
-
-    for (;;) {
-        display.fillScreen(GxEPD_WHITE);
-
-        display.display(false);
-        display.setCursor(0, 35);
-        display.printf("%u",count);
-        display.print("\n");
-
-        display.display(true);
-        count = count + 1;
-        vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*5);
-    }
-}
+*/
 
 
 void vPrint1(void* pvParameters){
@@ -224,7 +138,6 @@ void vPrint1(void* pvParameters){
         sprintf(str, "Message: 1");
         sprintf(str_buffer, "Message: 1");
         xQueueSend(PrinterQueue, &str, 0);
-        traceQUEUE_SEND(PrinterQueue);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.1);
     }
 }
@@ -240,7 +153,6 @@ void vPrint2(void* pvParameters){
         sprintf(str, "Message: 2");
         sprintf(str_buffer, "Message: 2");
         xQueueSend(PrinterQueue, &str, 0);
-        traceQUEUE_SEND(PrinterQueue);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.2);
     }
 }
@@ -257,7 +169,6 @@ void vPrint3(void* pvParameters){
         sprintf(str_buffer, "Message: 3");
         xQueueSend(PrinterQueue, &str, 0);
         //ESP_LOGI("vPrinter", "%s", str);
-        traceQUEUE_SEND(PrinterQueue);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.3);
     }
 }
@@ -271,56 +182,19 @@ void vPrinter(void* pvParameters){
     ESP_LOGI("vPrinter", "Reciever initialized");
     for (;;) {
         xQueueReceive( PrinterQueue, &xMessage, portMAX_DELAY);
-        traceQUEUE_RECIEVE(PrinterQueue);
-        //log_buffer[log_index++] = traceQUEUE_RECIEVE();
-        //  ESP_LOGI("vPrinter", "%s", xMessage);
+        // Periodically report how many times queues have been sent to
+        ESP_LOGI("vPrinter", "Queue send count: %u", (unsigned)g_queue_send_count);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_MS*0.1);
     } 
 }
 
-void vLogger (void* pvParameters){
-
-    //deletes all previous tasks
-    if (sender1 != NULL){
-        vTaskDelete(sender1);
-    }
-    if (sender2 != NULL){
-        vTaskDelete(sender2);
-    }
-    if (sender3 != NULL){
-        vTaskDelete(sender3);
-    }
-    if (reciever != NULL){
-        vTaskDelete(reciever);
-    }
-
-    //prints all previous logs
-    ESP_LOGI("vLogger", "Logging events:");
-    ESP_LOGI("vLogger", "Number of logs: %d", log_index);
-    for (int i = 0; i < log_index - 1; i++){
-        if (log_buffer[i] != NULL) {
-            ESP_LOGI("vLogger", "%s", log_buffer[i]);
-        } else {
-            ESP_LOGI("vLogger", "Entry %d: NULL", i);
-        }
-    }
-    
-    // Delete this task when done
-    vTaskDelete(NULL);
-}
 
 extern "C" void app_main() {
-    /* Only priorities from 1-25 (configMAX_PRIORITIES) possible. */
-    /* Initialize the display first. */
-    
-    //xTaskCreate(initDisplay, "initDisplay", 4096, NULL, configMAX_PRIORITIES-1, NULL);
-    //xTaskCreate(buttonWatch, "watch", 8192, NULL, 1, NULL);
-    //xTaskCreate(vPeriodicCounter, "counter", 8192, NULL, configMAX_PRIORITIES-2, NULL);
+
     xTaskCreate(vPrinter, "reciever", 4096, NULL, 4, &reciever);
     xTaskCreate(vPrint1, "sender 1", 4096, NULL, 3, &sender1);
     xTaskCreate(vPrint2, "sender 2", 4096, NULL, 3, &sender2);
     xTaskCreate(vPrint3, "sender 3", 4096, NULL, 3, &sender3);
-    xTaskCreate(vLogger, "logger", 8192, NULL, 2, NULL);
 
     ESP_LOGI("app_main", "Starting scheduler from app_main()");
     vTaskStartScheduler();
