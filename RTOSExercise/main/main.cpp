@@ -91,7 +91,7 @@ void vPrinter(void* pvParameters){
     
     ESP_LOGI("vPrinter", "Reciever initialized");
     for (;;) {
-        xQueueReceive( PrinterQueue, &xMessage, portMAX_DELAY);
+        xQueueReceive( PrinterQueue, &xMessage, portMAX_DELAY); //portMAX_DELAY = ULONG_MAX, is it supposed to be like this?
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_S*0.1);
     } 
 }
@@ -120,7 +120,7 @@ extern "C" void app_main() {
     xTaskCreate(vPrint3, "sender 3", 4096, NULL, 3, &sender3);
     
     /* Create trace logger task with lower priority */
-    xTaskCreate(vTraceLogger, "trace_logger", 4096, NULL, 2, NULL);
+    xTaskCreate(vTraceLogger, "trace_lg", 4096, NULL, 2, NULL);
 
     ESP_LOGI("app_main", "Starting scheduler from app_main()");
     vTaskStartScheduler();

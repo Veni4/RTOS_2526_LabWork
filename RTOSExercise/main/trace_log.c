@@ -53,14 +53,14 @@ void print_trace_logs(void)
             task_name = pcTaskGetName((TaskHandle_t)e->task);
         }
 
-        printf("[%3" PRIu32 "] tick=%6" PRIu32 " us=%10" PRIu64 " queue=%p wait=%3" PRIu32 " task=%s type=%c\n",
+        printf("[%3"PRIu32"] tick=%6"PRIu32" us=%10"PRIu64" queue=%p task=%s type=%c wait=%3"PRIu32" \n",
                i,
                (uint32_t)e->tick,
                (uint64_t)e->timestamp_us,
                (void*)e->queue,
-               (uint32_t)e->block_time,
                task_name,
-               e->log_type);
+               e->log_type,
+               (uint32_t)e->block_time);
     }
 
     printf("==========================================\n\n");
