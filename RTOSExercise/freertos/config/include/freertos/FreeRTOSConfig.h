@@ -280,6 +280,9 @@
      
     #define traceQUEUE_SEND( pxQueue )    ( g_queue_send_count++ )
     */
+
+    //timestamps should be redefined
+
     /* --------- traceQUEUE_SEND macros ----------------- */
     #undef traceQUEUE_SEND
     #undef traceQUEUE_SEND_FAILED
