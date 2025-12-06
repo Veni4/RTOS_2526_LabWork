@@ -1556,7 +1556,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
             {
                 /* Data available, remove one item. */
                 prvCopyDataFromQueue( pxQueue, pvBuffer );
-                traceQUEUE_RECEIVE( pxQueue );
+                traceQUEUE_RECEIVE( pxQueue, xTicksToWait );
                 pxQueue->uxMessagesWaiting = uxMessagesWaiting - ( UBaseType_t ) 1;
 
                 /* There is now space in the queue, were any tasks waiting to
@@ -1588,7 +1588,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
                     /* The queue was empty and no block time is specified (or
                      * the block time has expired) so leave now. */
                     taskEXIT_CRITICAL( &( pxQueue->xQueueLock ) );
-                    traceQUEUE_RECEIVE_FAILED( pxQueue );
+                    traceQUEUE_RECEIVE_FAILED( pxQueue, xTicksToWait );
                     return errQUEUE_EMPTY;
                 }
                 else if( xEntryTimeSet == pdFALSE )
@@ -1623,7 +1623,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
                 {
                     /* We have timed out. Return an error. */
                     taskEXIT_CRITICAL( &( pxQueue->xQueueLock ) );
-                    traceQUEUE_RECEIVE_FAILED( pxQueue );
+                    traceQUEUE_RECEIVE_FAILED( pxQueue, xTicksToWait );
                     return errQUEUE_EMPTY;
                 }
             }
@@ -1680,7 +1680,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
 
                 if( prvIsQueueEmpty( pxQueue ) != pdFALSE )
                 {
-                    traceQUEUE_RECEIVE_FAILED( pxQueue );
+                    traceQUEUE_RECEIVE_FAILED( pxQueue, xTicksToWait );
                     return errQUEUE_EMPTY;
                 }
                 else
@@ -1784,7 +1784,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                     /* The semaphore count was 0 and no block time is specified
                      * (or the block time has expired) so exit now. */
                     taskEXIT_CRITICAL( &( pxQueue->xQueueLock ) );
-                    traceQUEUE_RECEIVE_FAILED( pxQueue );
+                    traceQUEUE_RECEIVE_FAILED( pxQueue, xTicksToWait );
                     return errQUEUE_EMPTY;
                 }
                 else if( xEntryTimeSet == pdFALSE )
@@ -1844,7 +1844,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                     }
                     #endif /* configUSE_MUTEXES */
                     taskEXIT_CRITICAL( &( pxQueue->xQueueLock ) );
-                    traceQUEUE_RECEIVE_FAILED( pxQueue );
+                    traceQUEUE_RECEIVE_FAILED( pxQueue, xTicksToWait );
                     return errQUEUE_EMPTY;
                 }
             }
@@ -1949,7 +1949,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                     }
                     #endif /* configUSE_MUTEXES */
 
-                    traceQUEUE_RECEIVE_FAILED( pxQueue );
+                    traceQUEUE_RECEIVE_FAILED( pxQueue, xTicksToWait );
                     return errQUEUE_EMPTY;
                 }
                 else

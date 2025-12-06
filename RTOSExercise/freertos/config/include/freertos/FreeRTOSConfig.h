@@ -262,15 +262,152 @@
         #endif
     #endif /* CONFIG_FREERTOS_SMP */
 
-    /*minimal trace macro
-    * It creates a global variable 
-    * It increments the variable each time queue send is called
-    * then g_queue_send_count is printed in main.cpp
-    */
+    
     extern volatile uint32_t g_queue_send_count;
+
+
+    /*--------- traceQUEUE_XXXXXX macros -----------------*/
+    /* Forward declaration for trace log helper function
+     * Using basic types to avoid dependency on FreeRTOS types at this point
+     */
+    void add_trace_log_entry(unsigned long tick, unsigned long long timestamp_us, void* queue, unsigned long block_time, void* task, char log_type);
+    /*
     #undef traceQUEUE_SEND
+     Minimal trace macro
+     * Uses a global variable (declared here, defined in main.cpp)
+     * Increments the variable each time queue send is called
+     * The counter is then printed in main.cpp via ESP_LOGI
+     
     #define traceQUEUE_SEND( pxQueue )    ( g_queue_send_count++ )
-#endif /* def __ASSEMBLER__ */
+    */
+    /* --------- traceQUEUE_SEND macros ----------------- */
+    #undef traceQUEUE_SEND
+    #undef traceQUEUE_SEND_FAILED
+    #undef traceQUEUE_SEND_FROM_ISR
+    #undef traceQUEUE_SEND_FROM_ISR_FAILED
+
+    #define traceQUEUE_SEND( pxQueue ) \
+    do {                                                     \
+        unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
+        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        add_trace_log_entry(                                \
+            tick_count,                                     \
+            timestamp_us,                                   \
+            (void*)(pxQueue),                               \
+            (unsigned long)(0),                  \
+            (void*)xTaskGetCurrentTaskHandle(),             \
+            's'                                             \
+        );                                                  \
+    } while(0)
+    #define traceQUEUE_SEND_FAILED( pxQueue ) \
+    do {                                                     \
+        unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
+        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        add_trace_log_entry(                                \
+            tick_count,                                     \
+            timestamp_us,                                   \
+            (void*)(pxQueue),                               \
+            (unsigned long)(0),                  \
+            (void*)xTaskGetCurrentTaskHandle(),             \
+            'f'                                             \
+        );                                                  \
+    } while(0)
+    #define traceQUEUE_SEND_FROM_ISR( pxQueue ) \
+    do {                                                     \
+        unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
+        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        add_trace_log_entry(                                \
+            tick_count,                                     \
+            timestamp_us,                                   \
+            (void*)(pxQueue),                               \
+            (unsigned long)(0),                  \
+            (void*)xTaskGetCurrentTaskHandle(),             \
+            'd'                                             \
+        );                                                  \
+    } while(0)
+    #define traceQUEUE_SEND_FROM_ISR_FAILED( pxQueue ) \
+    do {                                                     \
+        unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
+        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        add_trace_log_entry(                                \
+            tick_count,                                     \
+            timestamp_us,                                   \
+            (void*)(pxQueue),                               \
+            (unsigned long)(0),                  \
+            (void*)xTaskGetCurrentTaskHandle(),             \
+            'g'                                             \
+        );                                                  \
+    } while(0)
+    /* -------------end traceQUEUE_SEND macros----------- */
+
+    /* --------- traceQUEUE_RECEIVE macros ----------------- */
+    /* Forward declaration for trace log helper function
+     * Using basic types to avoid dependency on FreeRTOS types at this point
+     */
+    
+    #undef traceQUEUE_RECEIVE
+    #undef traceQUEUE_RECEIVE_FAILED
+    #undef traceQUEUE_RECEIVE_FROM_ISR
+    #undef traceQUEUE_RECEIVE_FROM_ISR_FAILED
+
+    /* traceQUEUE_RECEIVE macro - logs queue receive events
+     * Now accepts xTicksToWait as second parameter (kernel must pass it)
+     * Calculates microseconds from ticks using configTICK_RATE_HZ (kernel-based timing)
+     */
+    #define traceQUEUE_RECEIVE( pxQueue, xTicksToWait ) \
+    do {                                                     \
+        unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
+        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        add_trace_log_entry(                                \
+            tick_count,                                     \
+            timestamp_us,                                   \
+            (void*)(pxQueue),                               \
+            (unsigned long)(xTicksToWait),                  \
+            (void*)xTaskGetCurrentTaskHandle(),             \
+            'r'                                             \
+        );                                                  \
+    } while(0)
+    #define traceQUEUE_RECEIVE_FAILED( pxQueue, xTicksToWait ) \
+    do {                                                     \
+        unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
+        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        add_trace_log_entry(                                \
+            tick_count,                                     \
+            timestamp_us,                                   \
+            (void*)(pxQueue),                               \
+            (unsigned long)(xTicksToWait),                  \
+            (void*)xTaskGetCurrentTaskHandle(),             \
+            'e'                                             \
+        );                                                  \
+    } while(0)
+    #define traceQUEUE_RECEIVE_FROM_ISR( pxQueue ) \
+    do {                                                     \
+        unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
+        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        add_trace_log_entry(                                \
+            tick_count,                                     \
+            timestamp_us,                                   \
+            (void*)(pxQueue),                               \
+            (unsigned long)(0),                  \
+            (void*)xTaskGetCurrentTaskHandle(),             \
+            'l'                                             \
+        );                                                  \
+    } while(0)
+    #define traceQUEUE_RECEIVE_FROM_ISR_FAILED( pxQueue ) \
+    do {                                                     \
+        unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
+        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        add_trace_log_entry(                                \
+            tick_count,                                     \
+            timestamp_us,                                   \
+            (void*)(pxQueue),                               \
+            (unsigned long)(0),                  \
+            (void*)xTaskGetCurrentTaskHandle(),             \
+            'k'                                             \
+        );                                                  \
+    } while(0)
+    /* -------------end traceQUEUE_RECEIVE macros----------- */
+    #endif /* def __ASSEMBLER__ */
 
 #if CONFIG_FREERTOS_USE_APPLICATION_TASK_TAG
     #define configUSE_APPLICATION_TASK_TAG    1
