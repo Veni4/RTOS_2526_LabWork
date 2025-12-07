@@ -272,7 +272,6 @@
      */
     void add_trace_log_entry(unsigned long tick, unsigned long long timestamp_us, void* queue, unsigned long block_time, void* task, char log_type);
     /*
-    #undef traceQUEUE_SEND
      Minimal trace macro
      * Uses a global variable (declared here, defined in main.cpp)
      * Increments the variable each time queue send is called
@@ -280,8 +279,6 @@
      
     #define traceQUEUE_SEND( pxQueue )    ( g_queue_send_count++ )
     */
-
-    //timestamps should be redefined
 
     /* --------- traceQUEUE_SEND macros ----------------- */
     #undef traceQUEUE_SEND
@@ -303,7 +300,6 @@
         );                                                  \
     } while(0)
 
-    //((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ;
     #include "esp_timer.h"
 
     #define traceQUEUE_SEND_FAILED( pxQueue ) \
@@ -322,7 +318,7 @@
     #define traceQUEUE_SEND_FROM_ISR( pxQueue ) \
     do {                                                     \
         unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
-        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
         add_trace_log_entry(                                \
             tick_count,                                     \
             timestamp_us,                                   \
@@ -335,7 +331,7 @@
     #define traceQUEUE_SEND_FROM_ISR_FAILED( pxQueue ) \
     do {                                                     \
         unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
-        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
         add_trace_log_entry(                                \
             tick_count,                                     \
             timestamp_us,                                   \
@@ -364,7 +360,7 @@
     #define traceQUEUE_RECEIVE( pxQueue, xTicksToWait ) \
     do {                                                     \
         unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
-        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
         add_trace_log_entry(                                \
             tick_count,                                     \
             timestamp_us,                                   \
@@ -377,7 +373,7 @@
     #define traceQUEUE_RECEIVE_FAILED( pxQueue, xTicksToWait ) \
     do {                                                     \
         unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
-        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
         add_trace_log_entry(                                \
             tick_count,                                     \
             timestamp_us,                                   \
@@ -390,7 +386,7 @@
     #define traceQUEUE_RECEIVE_FROM_ISR( pxQueue ) \
     do {                                                     \
         unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
-        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
         add_trace_log_entry(                                \
             tick_count,                                     \
             timestamp_us,                                   \
@@ -403,7 +399,7 @@
     #define traceQUEUE_RECEIVE_FROM_ISR_FAILED( pxQueue ) \
     do {                                                     \
         unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
-        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
         add_trace_log_entry(                                \
             tick_count,                                     \
             timestamp_us,                                   \
@@ -414,7 +410,37 @@
         );                                                  \
     } while(0)
     /* -------------end traceQUEUE_RECEIVE macros----------- */
-    #endif /* def __ASSEMBLER__ */
+
+    /*--------- traceTASK_INCREMENT_TICK macro -----------------*/
+    /* Tick increment trace logger
+     * Logs the tick count and timestamp when a tick is incremented
+     */
+    
+    void add_trace_log_entry_newtick(unsigned long old_tick, unsigned long long timestamp_us, const char* identifier, unsigned long new_tick, char log_type);
+    /*
+     Minimal trace macro
+     * Uses a global variable (declared here, defined in main.cpp)
+     * Shows the tick count each time tick is incremented
+     * The counter is then printed in main.cpp via ESP_LOGI
+    */
+
+    #undef traceTASK_INCREMENT_TICK
+
+    #define traceTASK_INCREMENT_TICK( xTickCount )              \
+    do {                                                        \
+        unsigned long tick_count = (unsigned long)(xTickCount); \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
+        add_trace_log_entry_newtick(                            \
+            tick_count,                                         \
+            timestamp_us,                                       \
+            "traceTASK_INCREMENT_TICK",                         \
+            (unsigned long)(tick_count + 1),                    \
+            't'                                                 \
+        );                                                      \
+    } while(0)
+    /* -------------end traceTASK_INCREMENT_TICK macro----------- */
+
+#endif /* def __ASSEMBLER__ */
 
 #if CONFIG_FREERTOS_USE_APPLICATION_TASK_TAG
     #define configUSE_APPLICATION_TASK_TAG    1
