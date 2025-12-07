@@ -68,7 +68,7 @@ void print_trace_logs(void)
         
         switch (e->log_type) {
             case 's': case 'f': case 'r': case 'e':
-            case 'l': case 'k':
+            case 'l': case 'k': case 'i': case 'o':
 
                 if (e->task != NULL) {
                     task_name = pcTaskGetName((TaskHandle_t)e->task);
@@ -86,7 +86,7 @@ void print_trace_logs(void)
                 break;
 
             case 't':
-                printf("[%3"PRIu32"] tick=%6"PRIu32" time=%10"PRIu64"us task=%s new tick=%6"PRIu32" type=%c \n",
+                printf("[%3"PRIu32"] tick=%6"PRIu32" time=%10"PRIu64"us task=%s new_tick=%6"PRIu32" type=%c \n",
                     i,
                     (uint32_t)e->tick,
                     (uint64_t)e->timestamp_us,

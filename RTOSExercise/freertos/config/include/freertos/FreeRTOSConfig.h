@@ -280,6 +280,8 @@
     #define traceQUEUE_SEND( pxQueue )    ( g_queue_send_count++ )
     */
 
+    #include "esp_timer.h" //for esp_timer_get_time()
+
     /* --------- traceQUEUE_SEND macros ----------------- */
     #undef traceQUEUE_SEND
     #undef traceQUEUE_SEND_FAILED
@@ -299,8 +301,6 @@
             's'                                             \
         );                                                  \
     } while(0)
-
-    #include "esp_timer.h"
 
     #define traceQUEUE_SEND_FAILED( pxQueue ) \
     do {                                                     \
@@ -439,6 +439,46 @@
         );                                                      \
     } while(0)
     /* -------------end traceTASK_INCREMENT_TICK macro----------- */
+
+    /*--------- traceTASK_SWITCHED_*** macros -----------------*/
+    /* Tracks when a task switch occurs
+     * Logs the tick count and timestamp when a task is switched
+     */
+
+    //lacks specific event tracking
+
+    #undef traceTASK_SWITCHED_IN
+    #undef traceTASK_SWITCHED_OUT
+
+    #define traceTASK_SWITCHED_IN()                             \
+    do {                                                        \
+        unsigned long tick_count = xTaskGetTickCount();         \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
+        add_trace_log_entry(                                    \
+            tick_count,                                         \
+            timestamp_us,                                       \
+            (void*)NULL,                                        \
+            (unsigned long)0,                                   \
+            (void*)xTaskGetCurrentTaskHandle(),                 \
+            'i'                                                 \
+        );                                                      \
+    } while(0)
+
+    #define traceTASK_SWITCHED_OUT() \
+    do {                                                        \
+        unsigned long tick_count = xTaskGetTickCount();         \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
+        add_trace_log_entry(                                    \
+            tick_count,                                         \
+            timestamp_us,                                       \
+            (void*)NULL,                                        \
+            (unsigned long)0,                                   \
+            (void*)xTaskGetCurrentTaskHandle(),                 \
+            'o'                                                 \
+        );                                                      \
+    } while(0)
+
+    /* -------------end traceTASK_SWITCHED_*** macros----------- */
 
 #endif /* def __ASSEMBLER__ */
 
