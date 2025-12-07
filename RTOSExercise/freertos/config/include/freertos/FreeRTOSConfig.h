@@ -292,7 +292,7 @@
     #define traceQUEUE_SEND( pxQueue ) \
     do {                                                     \
         unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
-        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
         add_trace_log_entry(                                \
             tick_count,                                     \
             timestamp_us,                                   \
@@ -302,10 +302,14 @@
             's'                                             \
         );                                                  \
     } while(0)
+
+    //((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ;
+    #include "esp_timer.h"
+
     #define traceQUEUE_SEND_FAILED( pxQueue ) \
     do {                                                     \
         unsigned long tick_count = (unsigned long)xTaskGetTickCount(); \
-        unsigned long long timestamp_us = ((unsigned long long)tick_count * 1000000ULL) / configTICK_RATE_HZ; \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
         add_trace_log_entry(                                \
             tick_count,                                     \
             timestamp_us,                                   \
