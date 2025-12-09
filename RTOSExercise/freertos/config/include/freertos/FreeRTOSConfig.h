@@ -416,7 +416,7 @@
      * Logs the tick count and timestamp when a tick is incremented
      */
     
-    void add_trace_log_entry_newtick(unsigned long old_tick, unsigned long long timestamp_us, const char* identifier, unsigned long new_tick, char log_type);
+    void add_trace_log_entry_newtick(unsigned long old_tick, unsigned long long timestamp_us, const char* identifier, unsigned long new_tick, void* task, char log_type);
     /*
      Minimal trace macro
      * Uses a global variable (declared here, defined in main.cpp)
@@ -435,15 +435,138 @@
             timestamp_us,                                       \
             "traceTASK_INCREMENT_TICK",                         \
             (unsigned long)(tick_count + 1),                    \
+            (void*) 0,                                          \
             't'                                                 \
         );                                                      \
     } while(0)
     /* -------------end traceTASK_INCREMENT_TICK macro----------- */
 
-    /*--------- traceTASK_SWITCHED_*** macros -----------------*/
+    /*--------- traceTASK_CREATE_*** macros -----------------*/
+    /* Tracks when a task is created
+     * Logs the tick count and timestamp when a task is created
+     */
+
+    void add_trace_log_entry_identifier(unsigned long tick, unsigned long long timestamp_us, const char* identifier, void* task, char log_type);
+    /*
+     Minimal trace macro
+     * Uses a global variable (declared here, defined in main.cpp)
+     * Shows the identifier for the log event with the associated task
+     * The counter is then printed in main.cpp via ESP_LOGI
+    */
+
+    //how does tcb affect this?
+
+    #undef traceTASK_CREATE
+    #undef traceTASK_CREATE_FAILED
+
+    #define traceTASK_CREATE( pxNewTCB )                        \
+    do {                                                        \
+        unsigned long tick_count = xTaskGetTickCount();         \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
+        const char* task_name = "unknown";                      \
+        if (pxNewTCB != NULL) {                                 \
+            task_name = pcTaskGetName((TaskHandle_t)pxNewTCB);  \
+        }                                                       \
+        add_trace_log_entry_identifier(                         \
+            tick_count,                                         \
+            timestamp_us,                                       \
+            "traceTASK_CREATE",                                 \
+            (void*)task_name,                                   \
+            'c'                                                 \
+        );                                                      \
+    } while(0)
+
+    #define traceTASK_CREATE_FAILED()                           \
+    do {                                                        \
+        unsigned long tick_count = xTaskGetTickCount();         \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
+        add_trace_log_entry_identifier(                         \
+            tick_count,                                         \
+            timestamp_us,                                       \
+            "traceTASK_CREATE_FAILED",                          \
+            (void*)xTaskGetCurrentTaskHandle(),                 \
+            'g'                                                 \
+        );                                                      \
+    } while(0)
+
+    /* -------------end traceTASK_CREATE_*** macros----------- */
+
+    /*--------- traceTASK_DELETE macro -----------------*/
+    /* Tracks when a task is deleted
+     * Logs the tick count and timestamp when a task is deleted
+     */
+
+    #undef traceTASK_DELETE
+
+    #define traceTASK_DELETE( pxDeletedTCB )                    \
+    do {                                                        \
+        unsigned long tick_count = xTaskGetTickCount();         \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
+        const char* task_name = "unknown";                      \
+        if (pxDeletedTCB != NULL) {                                 \
+            task_name = pcTaskGetName((TaskHandle_t)pxDeletedTCB);  \
+        }                                                           \
+        add_trace_log_entry_identifier(                         \
+            tick_count,                                         \
+            timestamp_us,                                       \
+            "traceTASK_DELETE",                                 \
+            (void*)task_name,                                   \
+            'd'                                                 \
+        );                                                      \
+    } while(0)
+
+    /* -------------end traceTASK_DELETE macro----------- */
+
+    /*--------- traceTASK_DELAY_*** macro -----------------*/
+    /* Tracks when a task is delayed
+     * Logs the tick count and timestamp when a task is delayed
+     */
+
+    #undef traceTASK_DELAY
+    #undef traceTASK_DELAY_UNTIL
+
+    #define traceTASK_DELAY()                                   \
+    do {                                                        \
+        unsigned long tick_count = xTaskGetTickCount();         \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
+        add_trace_log_entry_newtick(                            \
+            tick_count,                                         \
+            timestamp_us,                                       \
+            "traceTASK_DELAY",                                  \
+            (unsigned long)0,                                   \
+            (void*)xTaskGetCurrentTaskHandle(),                 \
+            'y'                                                 \
+        );                                                      \
+    } while(0)
+
+    #define traceTASK_DELAY_UNTIL(xTimeToWake)                  \
+    do {                                                        \
+        unsigned long tick_count = xTaskGetTickCount();         \
+        unsigned long long timestamp_us = esp_timer_get_time(); \
+        add_trace_log_entry_newtick(                            \
+            tick_count,                                         \
+            timestamp_us,                                       \
+            "traceTASK_DELAY_UNTIL",                            \
+            (unsigned long)xTimeToWake,                         \
+            (void*)xTaskGetCurrentTaskHandle(),                 \
+            'z'                                                 \
+        );                                                      \
+    } while(0)
+
+    /* -------------end traceTASK_DELAY_*** macro----------- */
+
+        /*--------- traceTASK_SWITCHED_*** macros -----------------*/
     /* Tracks when a task switch occurs
      * Logs the tick count and timestamp when a task is switched
      */
+
+    void add_trace_log_entry_event(unsigned long tick, unsigned long long timestamp_us, void* task, const char* event, char log_type);
+    /*
+     Minimal trace macro
+     * Uses a global variable (declared here, defined in main.cpp)
+     * Shows the event for the task being switched in or out
+     * The counter is then printed in main.cpp via ESP_LOGI
+    */
 
     //lacks specific event tracking
 
@@ -454,12 +577,12 @@
     do {                                                        \
         unsigned long tick_count = xTaskGetTickCount();         \
         unsigned long long timestamp_us = esp_timer_get_time(); \
-        add_trace_log_entry(                                    \
+        TaskHandle_t current_task = xTaskGetCurrentTaskHandle();\
+        add_trace_log_entry_event(                              \
             tick_count,                                         \
             timestamp_us,                                       \
-            (void*)NULL,                                        \
-            (unsigned long)0,                                   \
-            (void*)xTaskGetCurrentTaskHandle(),                 \
+            (void*)current_task,                                \
+            "traceTASK_SWITCHED_IN",                            \
             'i'                                                 \
         );                                                      \
     } while(0)
@@ -468,17 +591,19 @@
     do {                                                        \
         unsigned long tick_count = xTaskGetTickCount();         \
         unsigned long long timestamp_us = esp_timer_get_time(); \
-        add_trace_log_entry(                                    \
+        TaskHandle_t current_task = xTaskGetCurrentTaskHandle();\
+        add_trace_log_entry_event(                              \
             tick_count,                                         \
             timestamp_us,                                       \
-            (void*)NULL,                                        \
-            (unsigned long)0,                                   \
-            (void*)xTaskGetCurrentTaskHandle(),                 \
+            (void*)current_task,                                \
+            "traceTASK_SWITCHED_OUT",                           \
             'o'                                                 \
         );                                                      \
     } while(0)
 
     /* -------------end traceTASK_SWITCHED_*** macros----------- */
+
+
 
 #endif /* def __ASSEMBLER__ */
 

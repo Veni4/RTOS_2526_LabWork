@@ -36,7 +36,10 @@ void add_trace_log_entry(unsigned long tick, unsigned long long timestamp_us, vo
 void print_trace_logs(void);
 void flush_logs_to_file(void);
 
-void add_trace_log_entry_newtick(unsigned long old_tick, unsigned long long timestamp_us, const char* identifier, unsigned long new_tick, char log_type);
+void add_trace_log_entry_newtick(unsigned long old_tick, unsigned long long timestamp_us, const char* identifier, unsigned long new_tick, void* task, char log_type);
+void add_trace_log_entry_identifier(unsigned long tick, unsigned long long timestamp_us, const char* identifier, void* task, char log_type);
+void add_trace_log_entry_event(unsigned long tick, unsigned long long timestamp_us, void* task, const char* event, char log_type);
+
 
 
 #ifdef __cplusplus
