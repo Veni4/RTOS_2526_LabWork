@@ -4,6 +4,7 @@ import numpy as np
 import re
 import seaborn as sns
 from typing import List, Tuple, Dict, Optional
+import sys
 
 
 def load_data(csv_file_path: str) -> Optional[pd.DataFrame]:
@@ -201,16 +202,30 @@ def plot_task_schedule(task_segments: Dict[str, List[Tuple[int, int]]],
 
 if __name__ == "__main__":
     # load csv
-    df = load_data("log_entries.csv")
-    if df is None:
-        raise Exception("Failed to load data from CSV.")
-    
+    #df = load_data("log_entries.csv")
+    #if df is None:
+    #    raise Exception("Failed to load data from CSV.")
+
+    if len(sys.argv) > 1:
+        csv_file = sys.argv[1]
+        if not csv_file.startswith("log_") or not csv_file.endswith(".csv"):
+            print("Warning: File doesn't match 'log_*.csv' pattern")
+    else:
+        print("Usage: python visualize.py <log_entries.csv>")
+        sys.exit(1)
+
+    df = load_data(csv_file)
+
+    # debug
     if df is not None:
         print("Columns in CSV:", df.columns.tolist())
         print("First few rows:")
         print(df.head())
         print("Data types:")
         print(df.dtypes)
+
+    #sys.exit(0)
+    
 
     # postprocess log entries
     task_segments, max_tick, task_ids = get_task_segments(df)
