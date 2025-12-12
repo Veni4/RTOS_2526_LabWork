@@ -267,10 +267,30 @@
 
 
     /*--------- traceQUEUE_XXXXXX macros -----------------*/
+    /* Enum for trace log types - defined here to avoid include path issues */
+    typedef enum {
+        TRACE_LOG_QUEUE_SEND,                    // traceQUEUE_SEND
+        TRACE_LOG_QUEUE_SEND_FAILED,             // traceQUEUE_SEND_FAILED
+        TRACE_LOG_QUEUE_SEND_FROM_ISR,           // traceQUEUE_SEND_FROM_ISR
+        TRACE_LOG_QUEUE_SEND_FROM_ISR_FAILED,    // traceQUEUE_SEND_FROM_ISR_FAILED
+        TRACE_LOG_QUEUE_RECEIVE,                 // traceQUEUE_RECEIVE
+        TRACE_LOG_QUEUE_RECEIVE_FAILED,          // traceQUEUE_RECEIVE_FAILED
+        TRACE_LOG_QUEUE_RECEIVE_FROM_ISR,        // traceQUEUE_RECEIVE_FROM_ISR
+        TRACE_LOG_QUEUE_RECEIVE_FROM_ISR_FAILED, // traceQUEUE_RECEIVE_FROM_ISR_FAILED
+        TRACE_LOG_TASK_INCREMENT_TICK,           // traceTASK_INCREMENT_TICK
+        TRACE_LOG_TASK_CREATE,                   // traceTASK_CREATE
+        TRACE_LOG_TASK_CREATE_FAILED,            // traceTASK_CREATE_FAILED
+        TRACE_LOG_TASK_DELETE,                   // traceTASK_DELETE
+        TRACE_LOG_TASK_DELAY,                    // traceTASK_DELAY
+        TRACE_LOG_TASK_DELAY_UNTIL,              // traceTASK_DELAY_UNTIL
+        TRACE_LOG_TASK_SWITCHED_IN,              // traceTASK_SWITCHED_IN
+        TRACE_LOG_TASK_SWITCHED_OUT              // traceTASK_SWITCHED_OUT
+    } trace_log_type_t;
+
     /* Forward declaration for trace log helper function
      * Using basic types to avoid dependency on FreeRTOS types at this point
      */
-    void add_trace_log_entry(unsigned long tick, unsigned long long timestamp_us, void* queue, unsigned long block_time, void* task, char log_type);
+    void add_trace_log_entry(unsigned long tick, unsigned long long timestamp_us, void* queue, unsigned long block_time, void* task, trace_log_type_t log_type);
     /*
      Minimal trace macro
      * Uses a global variable (declared here, defined in main.cpp)
@@ -298,7 +318,7 @@
             (void*)(pxQueue),                               \
             (unsigned long)(0),                  \
             (void*)xTaskGetCurrentTaskHandle(),             \
-            's'                                             \
+            TRACE_LOG_QUEUE_SEND                             \
         );                                                  \
     } while(0)
 
@@ -312,7 +332,7 @@
             (void*)(pxQueue),                               \
             (unsigned long)(0),                  \
             (void*)xTaskGetCurrentTaskHandle(),             \
-            'f'                                             \
+            TRACE_LOG_QUEUE_SEND_FAILED                     \
         );                                                  \
     } while(0)
     #define traceQUEUE_SEND_FROM_ISR( pxQueue ) \
@@ -325,7 +345,7 @@
             (void*)(pxQueue),                               \
             (unsigned long)(0),                  \
             (void*)xTaskGetCurrentTaskHandle(),             \
-            'd'                                             \
+            TRACE_LOG_QUEUE_SEND_FROM_ISR                  \
         );                                                  \
     } while(0)
     #define traceQUEUE_SEND_FROM_ISR_FAILED( pxQueue ) \
@@ -338,7 +358,7 @@
             (void*)(pxQueue),                               \
             (unsigned long)(0),                  \
             (void*)xTaskGetCurrentTaskHandle(),             \
-            'g'                                             \
+            TRACE_LOG_QUEUE_SEND_FROM_ISR_FAILED           \
         );                                                  \
     } while(0)
     /* -------------end traceQUEUE_SEND macros----------- */
@@ -367,7 +387,7 @@
             (void*)(pxQueue),                               \
             (unsigned long)(xTicksToWait),                  \
             (void*)xTaskGetCurrentTaskHandle(),             \
-            'r'                                             \
+            TRACE_LOG_QUEUE_RECEIVE                         \
         );                                                  \
     } while(0)
     #define traceQUEUE_RECEIVE_FAILED( pxQueue, xTicksToWait ) \
@@ -380,7 +400,7 @@
             (void*)(pxQueue),                               \
             (unsigned long)(xTicksToWait),                  \
             (void*)xTaskGetCurrentTaskHandle(),             \
-            'e'                                             \
+            TRACE_LOG_QUEUE_RECEIVE_FAILED                  \
         );                                                  \
     } while(0)
     #define traceQUEUE_RECEIVE_FROM_ISR( pxQueue ) \
@@ -393,7 +413,7 @@
             (void*)(pxQueue),                               \
             (unsigned long)(0),                  \
             (void*)xTaskGetCurrentTaskHandle(),             \
-            'l'                                             \
+            TRACE_LOG_QUEUE_RECEIVE_FROM_ISR                \
         );                                                  \
     } while(0)
     #define traceQUEUE_RECEIVE_FROM_ISR_FAILED( pxQueue ) \
@@ -406,7 +426,7 @@
             (void*)(pxQueue),                               \
             (unsigned long)(0),                  \
             (void*)xTaskGetCurrentTaskHandle(),             \
-            'k'                                             \
+            TRACE_LOG_QUEUE_RECEIVE_FROM_ISR_FAILED        \
         );                                                  \
     } while(0)
     /* -------------end traceQUEUE_RECEIVE macros----------- */
@@ -416,7 +436,7 @@
      * Logs the tick count and timestamp when a tick is incremented
      */
     
-    void add_trace_log_entry_newtick(unsigned long old_tick, unsigned long long timestamp_us, const char* identifier, unsigned long new_tick, void* task, char log_type);
+    void add_trace_log_entry_newtick(unsigned long old_tick, unsigned long long timestamp_us, const char* identifier, unsigned long new_tick, void* task, trace_log_type_t log_type);
     /*
      Minimal trace macro
      * Uses a global variable (declared here, defined in main.cpp)
@@ -436,7 +456,7 @@
             "traceTASK_INCREMENT_TICK",                         \
             (unsigned long)(tick_count + 1),                    \
             (void*) 0,                                          \
-            't'                                                 \
+            TRACE_LOG_TASK_INCREMENT_TICK                       \
         );                                                      \
     } while(0)
     /* -------------end traceTASK_INCREMENT_TICK macro----------- */
@@ -446,7 +466,7 @@
      * Logs the tick count and timestamp when a task is created
      */
 
-    void add_trace_log_entry_identifier(unsigned long tick, unsigned long long timestamp_us, const char* identifier, void* task, char log_type);
+    void add_trace_log_entry_identifier(unsigned long tick, unsigned long long timestamp_us, const char* identifier, void* task, trace_log_type_t log_type);
     /*
      Minimal trace macro
      * Uses a global variable (declared here, defined in main.cpp)
@@ -472,7 +492,7 @@
             timestamp_us,                                       \
             "traceTASK_CREATE",                                 \
             (void*)task_name,                                   \
-            'c'                                                 \
+            TRACE_LOG_TASK_CREATE                               \
         );                                                      \
     } while(0)
 
@@ -485,7 +505,7 @@
             timestamp_us,                                       \
             "traceTASK_CREATE_FAILED",                          \
             (void*)xTaskGetCurrentTaskHandle(),                 \
-            'g'                                                 \
+            TRACE_LOG_TASK_CREATE_FAILED                        \
         );                                                      \
     } while(0)
 
@@ -511,7 +531,7 @@
             timestamp_us,                                       \
             "traceTASK_DELETE",                                 \
             (void*)task_name,                                   \
-            'd'                                                 \
+            TRACE_LOG_TASK_DELETE                               \
         );                                                      \
     } while(0)
 
@@ -535,7 +555,7 @@
             "traceTASK_DELAY",                                  \
             (unsigned long)0,                                   \
             (void*)xTaskGetCurrentTaskHandle(),                 \
-            'y'                                                 \
+            TRACE_LOG_TASK_DELAY                                \
         );                                                      \
     } while(0)
 
@@ -549,7 +569,7 @@
             "traceTASK_DELAY_UNTIL",                            \
             (unsigned long)xTimeToWake,                         \
             (void*)xTaskGetCurrentTaskHandle(),                 \
-            'z'                                                 \
+            TRACE_LOG_TASK_DELAY_UNTIL                          \
         );                                                      \
     } while(0)
 
@@ -560,7 +580,7 @@
      * Logs the tick count and timestamp when a task is switched
      */
 
-    void add_trace_log_entry_event(unsigned long tick, unsigned long long timestamp_us, void* task, const char* event, char log_type);
+    void add_trace_log_entry_event(unsigned long tick, unsigned long long timestamp_us, void* task, const char* event, trace_log_type_t log_type);
     /*
      Minimal trace macro
      * Uses a global variable (declared here, defined in main.cpp)
@@ -583,7 +603,7 @@
             timestamp_us,                                       \
             (void*)current_task,                                \
             "traceTASK_SWITCHED_IN",                            \
-            'i'                                                 \
+            TRACE_LOG_TASK_SWITCHED_IN                          \
         );                                                      \
     } while(0)
 
@@ -597,7 +617,7 @@
             timestamp_us,                                       \
             (void*)current_task,                                \
             "traceTASK_SWITCHED_OUT",                           \
-            'o'                                                 \
+            TRACE_LOG_TASK_SWITCHED_OUT                         \
         );                                                      \
     } while(0)
 
