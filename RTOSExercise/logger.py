@@ -10,14 +10,14 @@ from collections import Counter
 
 
 
-# 1. run "export.sh" inside a shell and get the resulting environment
+# run "export.sh" inside a shell and get the resulting environment
 cmd = 'bash -c "source ./esp/esp-idf/export.sh > /dev/null 2>&1 && env"'
-
 result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-# 2. start with your current environment
+
+# start with your current environment
 new_env = os.environ.copy()
 
-# 3. update with entries from the sourced script
+# update with entries from the sourced script
 for line in result.stdout.splitlines():
     if "=" in line:
         key, value = line.split("=", 1)
@@ -32,26 +32,26 @@ sys.stdout.flush()
 
 
 identifier_dict = {
-    "qs":  "TRACE_LOG_QUEUE_SEND",
-    "qsf": "TRACE_LOG_QUEUE_SEND_FAILED",
-    "qsi": "TRACE_LOG_QUEUE_SEND_FROM_ISR",
-    "qsif":"TRACE_LOG_QUEUE_SEND_FROM_ISR_FAILED",
-    "qr":  "TRACE_LOG_QUEUE_RECEIVE",
-    "qrf": "TRACE_LOG_QUEUE_RECEIVE_FAILED",
-    "qri": "TRACE_LOG_QUEUE_RECEIVE_FROM_ISR",
-    "qrif":"TRACE_LOG_QUEUE_RECEIVE_FROM_ISR_FAILED",
+    "qs":  "traceQUEUE_SEND",
+    "qsf": "traceQUEUE_SEND_FAILED",
+    "qsi": "traceQUEUE_SEND_FROM_ISR",
+    "qsif":"traceQUEUE_SEND_FROM_ISR_FAILED",
+    "qr":  "traceQUEUE_RECEIVE",
+    "qrf": "traceQUEUE_RECEIVE_FAILED",
+    "qri": "traceQUEUE_RECEIVE_FROM_ISR",
+    "qrif":"traceQUEUE_RECEIVE_FROM_ISR_FAILED",
 
-    "t+":  "TRACE_LOG_TASK_INCREMENT_TICK",
+    "t+":  "traceTASK_INCREMENT_TICK",
 
-    "tc":  "TRACE_LOG_TASK_CREATE",
-    "tcf": "TRACE_LOG_TASK_CREATE_FAILED",
-    "td":  "TRACE_LOG_TASK_DELETE",
+    "tc":  "traceTASK_CREATE",
+    "tcf": "traceTASK_CREATE_FAILED",
+    "td":  "traceTASK_DELETE",
 
-    "ts":  "TRACE_LOG_TASK_DELAY",
-    "tsu": "TRACE_LOG_TASK_DELAY_UNTIL",
+    "ts":  "traceTASK_DELAY",
+    "tsu": "traceTASK_DELAY_UNTIL",
 
-    "ti":  "TRACE_LOG_TASK_SWITCHED_IN",
-    "to":  "TRACE_LOG_TASK_SWITCHED_OUT"
+    "ti":  "traceTASK_SWITCHED_IN",
+    "to":  "traceTASK_SWITCHED_OUT"
 }
 
 
@@ -104,10 +104,10 @@ def parse_trace_line(line: str):
     )
 
 CSV_COLUMNS = [
-    "event_type",
+    "eventtype",
     "tick",
     "timestamp_us",
-    "task_handle",
+    "taskid",
     "queue_handle",
     "block_time",
     "new_tick",
@@ -121,10 +121,10 @@ def export_to_csv(logs, filename):
 
         for log in logs:
             writer.writerow({
-                "event_type": log.log_type,
+                "eventtype": log.log_type,
                 "tick": log.tick if log.tick != -1 else "",
                 "timestamp_us": log.timestamp_us if log.timestamp_us != -1 else "",
-                "task_handle": f"{log.task_handle:08x}" if log.task_handle != -1 else "",
+                "taskid": f"{log.task_handle:08x}" if log.task_handle != -1 else "",
                 "queue_handle": f"{log.queue_handle:08x}" if log.queue_handle != -1 else "",
                 "block_time": log.block_time if log.block_time != -1 else "",
                 "new_tick": log.new_tick if log.new_tick != -1 else "",
