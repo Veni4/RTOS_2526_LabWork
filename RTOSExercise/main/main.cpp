@@ -115,9 +115,9 @@ void vTraceLogger(void* pvParameters) {
 extern "C" void app_main() {
 
     xTaskCreate(vPrinter, "reciever", 4096, NULL, 4, &reciever);
-    xTaskCreate(vPrint1, "sender 1", 4096, NULL, 3, &sender1);
-    xTaskCreate(vPrint2, "sender 2", 4096, NULL, 3, &sender2);
-    xTaskCreate(vPrint3, "sender 3", 4096, NULL, 3, &sender3);
+    xTaskCreate(vPrint1, "sender-1", 4096, NULL, 3, &sender1);
+    xTaskCreate(vPrint2, "sender-2", 4096, NULL, 3, &sender2);
+    xTaskCreate(vPrint3, "sender-3", 4096, NULL, 3, &sender3);
     
     /* Create trace logger task with lower priority */
     xTaskCreate(vTraceLogger, "trace_lg", 4096, NULL, 2, NULL);

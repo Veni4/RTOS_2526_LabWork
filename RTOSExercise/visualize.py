@@ -23,10 +23,10 @@ def load_data(csv_file_path: str) -> Optional[pd.DataFrame]:
         print("The CSV file is empty.")
         return None
 
-    # Ensure 'tick' is numeric
-    df['tick'] = pd.to_numeric(df['tick'], errors='coerce')
-    df.dropna(subset=['tick'], inplace=True)
-    df['tick'] = df['tick'].astype(int)
+    # Ensure 'timestamp_us' is numeric
+    df['timestamp_us'] = pd.to_numeric(df['timestamp_us'], errors='coerce')
+    df.dropna(subset=['timestamp_us'], inplace=True)
+    df['timestamp_us'] = df['timestamp_us'].astype(int)
 
     return df
 
@@ -47,9 +47,9 @@ def get_task_segments(df: pd.DataFrame) -> Tuple[Dict[str, List[Tuple[int, int]]
     max_tick = 0
 
     for task_id in task_ids:
-        task_df = df[df['name'] == task_id].sort_values('tick')
-        switched_in_ticks = task_df.loc[task_df['eventtype'] == 'traceTASK_SWITCHED_IN', 'tick'].tolist()
-        switched_out_ticks = task_df.loc[task_df['eventtype'] == 'traceTASK_SWITCHED_OUT', 'tick'].tolist()
+        task_df = df[df['name'] == task_id].sort_values('timestamp_us')
+        switched_in_ticks = task_df.loc[task_df['eventtype'] == 'traceTASK_SWITCHED_IN', 'timestamp_us'].tolist()
+        switched_out_ticks = task_df.loc[task_df['eventtype'] == 'traceTASK_SWITCHED_OUT', 'timestamp_us'].tolist()
         print(task_df)
         segments = []
         in_idx = 0
@@ -70,7 +70,7 @@ def get_task_segments(df: pd.DataFrame) -> Tuple[Dict[str, List[Tuple[int, int]]
                 out_idx += 1
             else:
                 # last event is IN
-                last_known_tick = df['tick'].max()
+                last_known_tick = df['timestamp_us'].max()
                 if last_known_tick > in_tick:
                     segments.append((in_tick, last_known_tick))
                 break
@@ -82,7 +82,7 @@ def get_task_segments(df: pd.DataFrame) -> Tuple[Dict[str, List[Tuple[int, int]]
             task_segments[task_id] = segments
         elif not task_df.empty:
             # Handle task with no segments but has events (updates max_tick)
-            max_tick = max(max_tick, task_df['tick'].max())
+            max_tick = max(max_tick, task_df['timestamp_us'].max())
             task_segments[task_id] = []
 
     return task_segments, max_tick, task_ids
