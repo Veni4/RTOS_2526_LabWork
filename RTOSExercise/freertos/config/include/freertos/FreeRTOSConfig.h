@@ -288,17 +288,9 @@
     } trace_log_type_t;
 
     /* Forward declaration for trace log helper function
-     * Using basic types to avoid dependency on FreeRTOS types at this point
+     * Using basic types to avoid dependency on FreeRTOS types
      */
     void add_trace_log_entry(unsigned long tick, unsigned long long timestamp_us, void* queue, unsigned long block_time, void* task, trace_log_type_t log_type);
-    /*
-     Minimal trace macro
-     * Uses a global variable (declared here, defined in main.cpp)
-     * Increments the variable each time queue send is called
-     * The counter is then printed in main.cpp via ESP_LOGI
-     
-    #define traceQUEUE_SEND( pxQueue )    ( g_queue_send_count++ )
-    */
 
     #include "esp_timer.h" //for esp_timer_get_time()
 

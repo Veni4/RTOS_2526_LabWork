@@ -37,7 +37,7 @@ struct trace_log_entry {
     trace_log_type_t log_type;      /**< Type of trace event */
 };
 
-#define TRACE_LOG_BUFFER_SIZE 512
+#define TRACE_LOG_BUFFER_SIZE 1024
 extern struct trace_log_entry trace_log_buffer[TRACE_LOG_BUFFER_SIZE];
 extern volatile uint32_t trace_log_head;
 

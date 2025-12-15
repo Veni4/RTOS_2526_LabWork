@@ -99,8 +99,8 @@ void vTraceLogger(void* pvParameters) {
     unsigned long log_count = 0;
     for (;;) {
         ESP_LOGI("vPrinter", "Log count: %u", (unsigned)log_count);
-
-        vTaskDelayUntil(&xLastWakeTime, TICKS_PER_S * 2); //print every 2 seconds
+        // The printing takes so long that it can't really printed more often
+        vTaskDelayUntil(&xLastWakeTime, TICKS_PER_S * 10); //print every 10 seconds
         print_trace_logs();
         log_count = log_count + 1;
     }
@@ -113,7 +113,6 @@ extern "C" void app_main() {
     xTaskCreate(vPrint2, "sender-2", 4096, NULL, 3, &sender2);
     xTaskCreate(vPrint3, "sender-3", 4096, NULL, 3, &sender3);
     
-    /* Create trace logger task with lower priority */
     xTaskCreate(vTraceLogger, "trace_lg", 4096, NULL, 2, NULL);
 
     ESP_LOGI("app_main", "Starting scheduler from app_main()");
