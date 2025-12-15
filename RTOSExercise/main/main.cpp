@@ -20,14 +20,12 @@
 #define DISPLAY_DC 10
 #define DISPLAY_BUSY 19
 
-//Global variables, can be accessed by all tasks
-//Could be optimized by passing these as parameters to tasks instead
 QueueHandle_t PrinterQueue;
 
 GxEPD2_BW<WatchyDisplay, WatchyDisplay::HEIGHT> display(WatchyDisplay{});
 char* log_buffer[256] = {0};
 int log_index = 0;
-char str_buffer[64] = {0};  // Changed to array instead of pointer
+char str_buffer[64] = {0};
 TaskHandle_t sender1 = NULL;
 TaskHandle_t sender2 = NULL;
 TaskHandle_t sender3 = NULL;
@@ -38,7 +36,6 @@ void vPrint1(void* pvParameters){
     ESP_LOGI("vPrint1", "Initializing printer1");
     TickType_t xLastWakeTime;
     char* str;
-    //char counter = 0;
     str = (char*) pvPortMalloc(25*sizeof(char));
 
     xLastWakeTime = xTaskGetTickCount();
@@ -54,7 +51,6 @@ void vPrint1(void* pvParameters){
 void vPrint2(void* pvParameters){
     TickType_t xLastWakeTime;
     char* str;
-    //char counter = 0;
     str = (char*) pvPortMalloc(25*sizeof(char));
 
     xLastWakeTime = xTaskGetTickCount();
@@ -69,7 +65,6 @@ void vPrint2(void* pvParameters){
 void vPrint3(void* pvParameters){
     TickType_t xLastWakeTime;
     char* str;
-    //char counter = 0; 
     str = (char*) pvPortMalloc(25*sizeof(char));
 
     xLastWakeTime = xTaskGetTickCount();
@@ -78,7 +73,6 @@ void vPrint3(void* pvParameters){
         sprintf(str, "Message: 3");
         sprintf(str_buffer, "Message: 3");
         xQueueSend(PrinterQueue, &str, 0);
-        //ESP_LOGI("vPrinter", "%s", str);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_S*0.3);
     }
 }
@@ -91,7 +85,7 @@ void vPrinter(void* pvParameters){
     
     ESP_LOGI("vPrinter", "Reciever initialized");
     for (;;) {
-        xQueueReceive( PrinterQueue, &xMessage, portMAX_DELAY); //portMAX_DELAY = ULONG_MAX, is it supposed to be like this?
+        xQueueReceive( PrinterQueue, &xMessage, portMAX_DELAY);
         vTaskDelayUntil(&xLastWakeTime, TICKS_PER_S*0.1);
     } 
 }

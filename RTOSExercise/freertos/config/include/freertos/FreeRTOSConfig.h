@@ -474,8 +474,6 @@
      * The counter is then printed in main.cpp via ESP_LOGI
     */
 
-    //how does tcb affect this?
-
     #undef traceTASK_CREATE
     #undef traceTASK_CREATE_FAILED
 
@@ -587,8 +585,6 @@
      * Shows the event for the task being switched in or out
      * The counter is then printed in main.cpp via ESP_LOGI
     */
-
-    //lacks specific event tracking
 
     #undef traceTASK_SWITCHED_IN
     #undef traceTASK_SWITCHED_OUT

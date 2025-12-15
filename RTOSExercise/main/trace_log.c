@@ -1,3 +1,11 @@
+/**
+ * @file trace_log.c
+ * @brief Implementation of FreeRTOS trace logging system
+ * 
+ * This module implements a thread-safe circular buffer for capturing FreeRTOS
+ * events with microsecond precision. Uses critical sections for atomic updates.
+ */
+
 #include "trace_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -11,6 +19,12 @@ volatile uint32_t trace_log_head = 0;
 /* Static mutex for thread-safe access to trace log buffer */
 static portMUX_TYPE trace_log_mux = portMUX_INITIALIZER_UNLOCKED;
 
+
+/**
+ * @brief Convert trace log type to string token
+ * @param t Trace log type enum
+ * @return Two-character string token for log type
+ */
 static const char *trace_token(trace_log_type_t t)
 {
     switch (t) {
