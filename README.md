@@ -23,7 +23,7 @@ Each trace has several parameters associated, namely the tick it was registered 
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To run this program correctly, follow the instructions on this [https://github.com/TU-Dortmund-CS-LS12-DAES-teaching/RTOSExercise](base repo).
+To run this program correctly, follow the instructions on this repository [https://github.com/TU-Dortmund-CS-LS12-DAES-teaching/RTOSExercise].
 Install the correct required system packages and set up your system correctly, and run `local_setup.sh`.
 
 After that, on the installation folder, run `. ./esp/esp-idf/export.sh`, and `idf.py build` should result in a valid setup.
@@ -75,7 +75,7 @@ New files are added, namedly `trace_log.c` and `trace_log.h`, which run the logg
 
 Miguel Oliveira - Student ID No. 278982 - [miguel.oliveira@tu.dortmund.de](mailto:miguel.oliveira@tu.dortmund.de)
 
-Ilmari Hirvonen - 
+Ilmari Hirvonen - Student ID No. - [ilmari.hirvonen@tu-dortmund.de](mailto:ilmari.hirvonen@tu-dortmund.de)
 
 Project Link: [https://github.com/Veni4/RTOS_2526_LabWork](https://github.com/Veni4/RTOS_2526_LabWork)
 
