@@ -9,6 +9,8 @@ This project implements several traces for debugging based on FreeRTOS. These tr
 
 Each trace has several parameters associated, namely the tick it was registered in, a timestamp based on the system clock and a task handle or name. There are other specific parameters shown for each particular trace.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 <!-- BUILT WITH -->
 ## Built with
 
@@ -20,8 +22,6 @@ Each trace has several parameters associated, namely the tick it was registered 
 
 <!-- GETTING STARTED -->
 ## Getting Started
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 To run this program correctly, follow the instructions on this [https://github.com/TU-Dortmund-CS-LS12-DAES-teaching/RTOSExercise](base repo).
 Install the correct required system packages and set up your system correctly, and run `local_setup.sh`.
@@ -38,10 +38,42 @@ The full log can be recovered by calling `python logger.py` after the first time
 
 Then you can see the task diagram with `python visualize.py [your-log-name].csv`.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- CHANGES TO FREERTOS-->
+## Modifications to FreeRTOS
+
+Changes are made to `FreeRTOSConfig.h` that implement the following traces:
+* traceQUEUE_RECEIVE
+* traceQUEUE_RECEIVE_FAILED
+* traceQUEUE_RECEIVE_FROM_ISR
+* traceQUEUE_RECEIVE_FROM_ISR_FAILED
+* traceQUEUE_SEND
+* traceQUEUE_SEND_FAILED
+* traceQUEUE_SEND_FROM_ISR
+* traceQUEUE_SEND_FROM_ISR_FAILED
+
+* traceTASK_INCREMENT_TICK
+
+* traceTASK_DELAY
+* traceTASK_DELAY_UNTIL
+
+* traceTASK_SWITCHED_IN
+* traceTASK_SWITCHED_OUT
+
+(Not working as of writing)
+* traceTASK_CREATE
+* traceTASK_CREATE_FAILED
+* traceTASK_DELETE
+
+New files are added, namedly `trace_log.c` and `trace_log.h`, which run the logging and console printing process.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 <!-- CONTACT -->
 ## Contact
 
-Miguel Oliveira - miguel.oliveira@tu.dortmund.de
+Miguel Oliveira - Student ID No. 278982 - [miguel.oliveira@tu.dortmund.de](mailto:miguel.oliveira@tu.dortmund.de)
 
 Ilmari Hirvonen - 
 
