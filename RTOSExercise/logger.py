@@ -8,6 +8,26 @@ from datetime import datetime
 import csv
 from collections import Counter
 
+valid_logs = {
+    "traceQUEUE_SEND",
+    "traceQUEUE_SEND_FAILED",
+    "traceQUEUE_SEND_FROM_ISR",
+    "traceQUEUE_SEND_FROM_ISR_FAILED",
+    "traceQUEUE_RECEIVE",
+    "traceQUEUE_RECEIVE_FAILED",
+    "traceQUEUE_RECEIVE_FROM_ISR",
+    "traceQUEUE_RECEIVE_FROM_ISR_FAILED",
+    "traceTASK_INCREMENT_TICK",
+    "traceTASK_CREATE",
+    "traceTASK_CREATE_FAILED",
+    "traceTASK_DELETE",
+    "traceTASK_DELAY",
+    "traceTASK_DELAY_UNTIL",
+    "traceTASK_SWITCHED_IN",
+    "traceTASK_SWITCHED_OUT",
+    "??",
+    }
+
 
 @dataclass
 class TraceLog:
@@ -28,14 +48,18 @@ def parse_hex_or_none(s: str):
     return int(s, 16)
 
 def parse_int_or_none(s: str):
-    if s == "-" or s == "":
+    s = s.strip()
+    if s in ("-", ""):
         return None
     return int(s)
 
 def parse_trace_line(line: str):
     parts = line.strip().split()
-    if len(parts) != 8:
+
+    if len(parts) != 8 or parts[0] not in valid_logs:
         return None  # not a trace line
+
+
 
     tok, tick, us, task, queue, wait, newtick, name = parts
 
@@ -104,7 +128,24 @@ print("Starting idf.py monitor...\n")
 sys.stdout.flush()
 
 # Command to run the program on Mac
-cmd_line = 'script -q /dev/null idf.py monitor'
+use_unbuffer = subprocess.run(["which", "unbuffer"], capture_output=True).returncode == 0
+use_stdbuf = subprocess.run(["which", "stdbuf"], capture_output=True).returncode == 0
+use_script = subprocess.run(["which", "script"], capture_output=True).returncode == 0
+if use_unbuffer:
+    # Use 'unbuffer' from expect package (best option)
+    cmd_line = 'unbuffer idf.py monitor'
+elif use_script:
+    # Use 'script' command - macOS syntax: script [-a] file [command ...]
+    # -a = append, -q = quiet (no start/end messages)
+    cmd_line = 'script -q /dev/null idf.py monitor'
+elif use_stdbuf:
+    # Use 'stdbuf' to force line buffering
+    cmd_line = 'stdbuf -oL -eL idf.py monitor'
+else:
+    # Fallback: use shell redirection with unbuffered Python reading
+    cmd_line = 'idf.py monitor 2>&1'
+
+print(f"Using command: {cmd_line}\n")
 
 sys.stdout.flush()
 
