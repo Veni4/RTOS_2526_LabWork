@@ -100,7 +100,7 @@ void vTraceLogger(void* pvParameters) {
     for (;;) {
         ESP_LOGI("vPrinter", "Log count: %u", (unsigned)log_count);
         // The printing takes so long that it can't really printed more often
-        vTaskDelayUntil(&xLastWakeTime, TICKS_PER_S * 10); //print every 10 seconds
+        vTaskDelayUntil(&xLastWakeTime, TICKS_PER_S * 7); //print every 7 seconds
         print_trace_logs();
         log_count = log_count + 1;
     }

@@ -11,25 +11,27 @@
 #include "freertos/task.h"
 #include <stdio.h>
 #include <inttypes.h>
+#include <string.h>
 
-uint32_t logging_while_printing = 0;
+// At least currently the logs would just be filled with logging itself
+// So for the moment it gathering logs is disabled while logging
+#define LOGGING_WHILE_PRINTING 0
+// Another problem is that the buffer fills up in about 2 seconds but printing takes 5 seconds
+
 uint32_t enable_logging = 1;
 
 // Just to count how many logs would be missed if we don't allow new logs while printing
 volatile uint32_t dropped_logs = 0;
 
 struct trace_log_entry trace_log_buffer[TRACE_LOG_BUFFER_SIZE];
+struct trace_log_entry trace_log_buffer_snapshot[TRACE_LOG_BUFFER_SIZE];
+
 volatile uint32_t trace_log_head = 0;
 
 /* Static mutex for thread-safe access to trace log buffer */
 static portMUX_TYPE trace_log_mux = portMUX_INITIALIZER_UNLOCKED;
 
 
-/**
- * @brief Convert trace log type to string token
- * @param t Trace log type enum
- * @return Two-character string token for log type
- */
 static const char *trace_token(trace_log_type_t t)
 {
     switch (t) {
@@ -157,11 +159,17 @@ void add_trace_log_entry_event(unsigned long tick, unsigned long long timestamp_
 void print_trace_logs(void)
 {
     taskENTER_CRITICAL(&trace_log_mux);
-    if(logging_while_printing == 0) {
+    if(LOGGING_WHILE_PRINTING == 0) {
         enable_logging = 0;
     }
     uint32_t head = trace_log_head;
+
+    memcpy(trace_log_buffer_snapshot,
+           trace_log_buffer,
+           sizeof(trace_log_buffer));
     taskEXIT_CRITICAL(&trace_log_mux);
+
+    
 
     printf("\n========== TRACE LOG (%" PRIu32 " entries) ==========\n", head);
 
@@ -173,7 +181,7 @@ void print_trace_logs(void)
 
     for (uint32_t i = 0; i < entries_to_show; i++) {
         uint32_t idx = (head - entries_to_show + i) % TRACE_LOG_BUFFER_SIZE;
-        struct trace_log_entry *e = &trace_log_buffer[idx];
+        struct trace_log_entry *e = &trace_log_buffer_snapshot[idx];
         const char* task_name = "unknown";
         // in any case it will print 
         // <token> <tick> <us> <task_handle> <queue_handle> <wait_tick> <newtick> <taskname>

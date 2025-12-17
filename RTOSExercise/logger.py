@@ -146,7 +146,7 @@ else:
     cmd_line = 'idf.py monitor 2>&1'
 
 print(f"Using command: {cmd_line}\n")
-
+print("It takes about 5s for the first log entries.\nExit by ctrl + t followed by ctrl + x")
 sys.stdout.flush()
 
 process = subprocess.Popen(
@@ -170,6 +170,9 @@ def read_and_process(pipe):
             log = parse_trace_line(line)
             if log is not None:
                 logs.append(log)
+            if(len(logs)%1000 == 0 and len(logs) != 0):
+                print(f"Number of logs:{len(logs)}")
+                sys.stdout.flush()
 
     except Exception as e:
         print(f"\nError reading output: {e}\n", file=sys.stderr, flush=True)
