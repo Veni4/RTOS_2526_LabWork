@@ -10,7 +10,7 @@
 #include "trace_log.h"
 #include "pip.h"
 
-#define USE_PIP 1
+#define USE_PIP 0
 
 #define TICKS_PER_S 1000
 
@@ -58,7 +58,7 @@ void low_task(void* pv) {
         ESP_LOGI(TAG, "Low working %d (prio %u)", i, (unsigned)uxTaskPriorityGet(NULL));
         vTaskDelay(pdMS_TO_TICKS(200));
     }
-#if USE_PIP
+if USE_PIP
     pip_mutex_unlock(g_mutex);
 #else
     xSemaphoreGive(g_mutex);
@@ -115,24 +115,13 @@ void vTraceLogger(void* pvParameters) {
 
 extern "C" void app_main() {
 
-#if USE_PIP
-    g_mutex = pip_mutex_create();
-#else
-    g_mutex = xSemaphoreCreateBinary();
-    xSemaphoreGive(g_mutex);
-#endif
-
-    // Create Low with low priority
-    xTaskCreate(low_task, "low", 4096, NULL, 1, NULL);
-    // Medium with middle priority
-    xTaskCreate(medium_task, "medium", 4096, NULL, 2, NULL);
-    // High with high priority
-    xTaskCreate(high_task, "high", 4096, NULL, 3, NULL);
-
-    ESP_LOGI(TAG, "Demo tasks created (USE_PIP=%d)", USE_PIP);
+    xTaskCreate(vPrinter, "reciever", 4096, NULL, 4, &reciever);
+    xTaskCreate(vPrint1, "sender 1", 4096, NULL, 3, &sender1);
+    xTaskCreate(vPrint2, "sender 2", 4096, NULL, 3, &sender2);
+    xTaskCreate(vPrint3, "sender 3", 4096, NULL, 3, &sender3);
     
     /* Create trace logger task with lower priority */
-    //xTaskCreate(vTraceLogger, "trace_lg", 4096, NULL, 2, NULL);
+    xTaskCreate(vTraceLogger, "trace_lg", 4096, NULL, 2, NULL);
 
     ESP_LOGI("app_main", "Starting scheduler from app_main()");
     vTaskStartScheduler();
